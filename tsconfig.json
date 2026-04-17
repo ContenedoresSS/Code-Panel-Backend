@@ -23,7 +23,6 @@
     "declarationMap": true,
     "forceConsistentCasingInFileNames": true,
 
-
     // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
@@ -43,7 +42,7 @@
     "isolatedModules": true,
     "noUncheckedSideEffectImports": true,
     "moduleDetection": "force",
-    "skipLibCheck": true,
+    "skipLibCheck": true
   },
   "ts-node": {
     "esm": true,

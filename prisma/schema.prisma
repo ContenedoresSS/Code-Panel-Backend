@@ -6,17 +6,40 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  STUDENT
-  TEACHER
+model Role {
+  id Int @id @default(autoincrement())
+  name String @unique
+
+  invitationCodes InvitationCode[]
+  users User[]
+
+  @@map("roles")
+}
+
+model InvitationCode{
+  id  Int @id @default(autoincrement())
+  code      String   @unique @db.VarChar(20)
+  roleId    Int      @map("role_id")
+  isUsed    Boolean  @default(false) @map("is_used")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  
+  role      Role     @relation(fields: [roleId], references: [id])
+
+  @@map("invitation_codes")
 }
 
 model User {
-  id         String @id @default(uuid()) @db.Uuid
-  identifier String @unique 
-  password   String // Aquí guardaremos el hash de bcrypt
-  role       Role
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username     String   @unique @db.VarChar(50)
+  email        String   @unique @db.VarChar(100)
+  passwordHash String   @map("password_hash") @db.Text
+  name         String   @map("name") @db.VarChar(100)
+  lastName     String   @map("last_name") @db.VarChar(100)
+  identifier   String?  @unique @db.VarChar(20)
+  roleId       Int      @map("role_id")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
   
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  role         Role     @relation(fields: [roleId], references: [id])
+
+  @@map("users")
 }

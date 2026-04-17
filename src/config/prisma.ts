@@ -1,17 +1,26 @@
-import { PrismaClient } from '@prisma/client';
+import "dotenv/config";
+import { Pool } from "pg";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "@prisma/client"; // Importa desde el lugar estándar
 
 const prismaClientSingleton = () => {
-    return new PrismaClient();
+  const connectionString = `${process.env.DATABASE_URL}`;
+
+  const pool = new Pool({ connectionString });
+
+  const adapter = new PrismaPg(pool);
+
+  return new PrismaClient({ adapter });
 };
 
 declare global {
-    var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>;
+  var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>;
 }
 
 const prisma = globalThis.prismaGlobal ?? prismaClientSingleton();
 
 export default prisma;
 
-if (process.env.NODE_ENV !== 'production') {
-    globalThis.prismaGlobal = prisma;
+if (process.env.NODE_ENV !== "production") {
+  globalThis.prismaGlobal = prisma;
 }
