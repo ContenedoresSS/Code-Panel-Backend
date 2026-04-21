@@ -6,6 +6,8 @@ import type { RegisterUserReponse } from "../types/responses/register-user-respo
 import type { LoginRequest } from "../types/requests/login-request.model.js";
 import type { LoginResponse } from "../types/responses/login-response.model.js";
 import userService from "./user.service.js";
+import tokenService from "./token.service.js";
+import type { TokenPayload } from "../types/models/tokens/token-payload.model.js";
 
 class AuthService {
   readonly SALT_ROUNDS: number = 10;
@@ -79,16 +81,7 @@ class AuthService {
   }
 
   public async login(data: LoginRequest): Promise<LoginResponse> {
-    const user = await prisma.user.findFirst({
-      where: {
-        OR: [
-          { email: data.identifier },
-          { username: data.identifier },
-          { identifier: data.identifier },
-        ],
-      },
-      include: { role: true },
-    });
+    const user = await userService.findByAnyIdentifierAndRole(data.identifier);
 
     if (!user) {
       throw new Error("Invalid credentials");
@@ -99,19 +92,36 @@ class AuthService {
       throw new Error("Invalid credentials");
     }
 
-    const token = jwt.sign(
-      {
-        sub: user.id,
-        username: user.username,
-        role: user.role.name,
-      },
-      process.env.JWT_SECRET || "secret_key_temporal",
-      { expiresIn: "4h" } //
-    );
+    const pairTokens = await tokenService.generateTokenPair({
+      sub: user.id,
+      username: user.username,
+      role: user.role.name,
+    } as TokenPayload);
 
     return {
-      token,
-    };
+      token: pairTokens.accessToken,
+      refreshToken: pairTokens.refreshToken,
+    } as LoginResponse;
+  }
+
+  public async refreshAccessToken(refreshToken: string): Promise<LoginResponse> {
+    const decoded = tokenService.verifyRefreshToken(refreshToken);
+    const user = await userService.findByAnyIdentifierAndRole(decoded.sub);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const tokenPair = await tokenService.generateTokenPair({
+      sub: user.id,
+      username: user.username,
+      role: user.role.name,
+    });
+
+    return {
+      token: tokenPair.accessToken,
+      refreshToken: tokenPair.refreshToken,
+    } as LoginResponse;
   }
 }
 
