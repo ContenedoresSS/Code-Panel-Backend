@@ -1,8 +1,8 @@
-import "dotenv/config";
+import { ENV } from "./config/env.config.js";
 import express from "express";
 import v1Routes from "./routes/index.routes.js";
 
-const PORT = process.env.PORT || 3000;
+const PORT = ENV.PORT;
 
 const app = express();
 app.use(express.json());
