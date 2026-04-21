@@ -9,12 +9,7 @@ class UserService {
   async findByAnyIdentifierAndRole(identifier: string) {
     const user = await prisma.user.findFirst({
       where: {
-        OR: [
-          { id: identifier },
-          { email: identifier },
-          { username: identifier },
-          { identifier: identifier },
-        ],
+        OR: [{ id: identifier }, { email: identifier }, { identifier: identifier }],
       },
       include: { role: true },
     });

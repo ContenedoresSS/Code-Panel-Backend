@@ -9,7 +9,6 @@ class TokenService implements ITokenService {
     const accessToken = jwt.sign(
       {
         sub: payload.sub,
-        username: payload.username,
         role: payload.role,
       },
       ENV.JWT_SECRET,

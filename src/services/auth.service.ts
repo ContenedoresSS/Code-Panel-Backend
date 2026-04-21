@@ -1,6 +1,5 @@
 import bcrypt from "bcrypt";
 import prisma from "../config/prisma.js";
-import jwt from "jsonwebtoken";
 import type { RegisterUserRequest } from "../types/requests/register-user-request.model.js";
 import type { RegisterUserReponse } from "../types/responses/register-user-response.model.js";
 import type { LoginRequest } from "../types/requests/login-request.model.js";
@@ -94,7 +93,6 @@ class AuthService {
 
     const pairTokens = await tokenService.generateTokenPair({
       sub: user.id,
-      username: user.username,
       role: user.role.name,
     } as TokenPayload);
 
@@ -114,7 +112,6 @@ class AuthService {
 
     const tokenPair = await tokenService.generateTokenPair({
       sub: user.id,
-      username: user.username,
       role: user.role.name,
     });
 
