@@ -48,8 +48,5 @@
     "esm": true,
     "experimentalSpecifierResolution": "node"
   },
-  "exclude": [
-    "node_modules",
-    "prisma.config.ts" // <--- Añade esto para quitar el error de rootDir
-  ]
+  "exclude": ["node_modules", "prisma.config.ts", "prisma/seed.ts"]
 }

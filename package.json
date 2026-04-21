@@ -8,7 +8,10 @@
     "dev": "tsx watch --env-file=.env src/app.ts",
     "build": "tsc",
     "format": "prettier --write \"src/**/*.{ts,js}\" \"*.json\"",
-    "format:check": "prettier --check \"src/**/*.{ts,js}\" \"*.json\""
+    "format:check": "prettier --check \"src/**/*.{ts,js}\" \"*.json\"",
+    "db:init": "prisma migrate dev && prisma db seed",
+    "db:migrate": "prisma migrate dev",
+    "db:status": "prisma migrate status"
   },
   "keywords": [],
   "author": "",
