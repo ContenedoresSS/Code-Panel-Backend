@@ -3,6 +3,7 @@ import type { RegisterUserRequest } from "../types/requests/register-user-reques
 import authService from "../services/auth.service.js";
 import { Prisma } from "@prisma/client"; // Importante para capturar los tipos de error
 import type { LoginRequest } from "../types/requests/login-request.model.js";
+import type { RefreshSessionRequest } from "../types/requests/refresh-session-request.model.js";
 
 class AuthController {
   async register(req: Request, res: Response) {
@@ -37,6 +38,19 @@ class AuthController {
     } catch (error: any) {
       return res.status(401).json({
         error: error.message || "Login failed",
+      });
+    }
+  }
+
+  async refreshSession(req: Request, res: Response) {
+    try {
+      const data: RefreshSessionRequest = req.body;
+      const result = await authService.refreshAccessToken(data.refreshToken);
+
+      return res.status(200).json(result);
+    } catch (error: any) {
+      return res.status(400).json({
+        error: error.message || "Refresh token failed",
       });
     }
   }
