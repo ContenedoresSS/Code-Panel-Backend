@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.29-alpha] - 2026-11-09
+
+### Added
+- Admin endpoint `POST /programming-language/:id/image/ensure` (God) that verifies whether the language runner image exists and, if missing, pulls it, returning `{ dockerImage, alreadyPresent, pulled }`
+
+### Fixed
+- Single-file executions (`POST /execution/run`) now pull the language image automatically when it is not present on the host, instead of failing with `No such image`
+
+### Changed
+- Image existence check extracted into a public `ensureImage` method shared by both execution flows, reporting whether the image was already present or was pulled
+
+### Infrastructure
+- Updated the production `compose.prod.yaml` services and the environment example files (added `IMAGE_VERSION`, restructured `.env.example`)
+
 ## [0.0.28-alpha] - 2026-09-02
 
 ### Added
