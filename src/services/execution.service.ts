@@ -8,7 +8,10 @@ import type { ProgrammingLanguage } from "@prisma/client";
 import type { CodeFile } from "../types/models/execution/code-file.model.js";
 import type { ExecutionResult } from "../types/responses/execution-result.response.js";
 import { ExecutionStatus } from "../types/enums/execution-status.enum.js";
-import type { IExecutionService } from "./interfaces/execution.service.interface.js";
+import type {
+  IExecutionService,
+  ImageEnsureResult,
+} from "./interfaces/execution.service.interface.js";
 
 const WORKING_DIR = "/app";
 const STDIN_FILE = ".stdin.txt";
@@ -45,6 +48,8 @@ export class ExecutionService implements IExecutionService {
     });
 
     if (!language) throw new Error("Unsupported language");
+
+    await this.ensureImageExists(language.dockerImage);
 
     const fileName = `solution.${language.fileExtension}`;
     const files: CodeFile[] = [{ name: fileName, content: code }];
@@ -200,14 +205,20 @@ export class ExecutionService implements IExecutionService {
     };
   }
 
-  private async ensureImageExists(imageName: string): Promise<void> {
+  public async ensureImage(imageName: string): Promise<ImageEnsureResult> {
     try {
       await this.docker.getImage(imageName).inspect();
+      return { alreadyPresent: true, pulled: false };
     } catch (error: unknown) {
       if (!this.isImageNotFoundError(error)) throw error;
 
       await this.pullImage(imageName);
+      return { alreadyPresent: false, pulled: true };
     }
+  }
+
+  private async ensureImageExists(imageName: string): Promise<void> {
+    await this.ensureImage(imageName);
   }
 
   private isImageNotFoundError(error: unknown): boolean {

@@ -219,6 +219,80 @@ describe("ExecutionService", () => {
         expect.objectContaining({ Cmd: ["sh", "-c", "python3 solution.py"] })
       );
     });
+
+    it("pulls the image when it is missing before creating the container", async () => {
+      mocks.getImage.mockReturnValue({
+        inspect: vi
+          .fn()
+          .mockRejectedValue(Object.assign(new Error("no such image"), { statusCode: 404 })),
+      });
+      mocks.pull.mockResolvedValue({});
+      mocks.followProgress.mockImplementation(
+        (_stream: unknown, onFinished: (error: Error | null) => void) => {
+          onFinished(null);
+        }
+      );
+      const container = createFakeContainer();
+      mocks.createContainer.mockResolvedValue(container);
+
+      await executionService.runCode(1, "print('hi')");
+
+      expect(mocks.pull).toHaveBeenCalledWith("python:3.12-alpine");
+      expect(mocks.createContainer).toHaveBeenCalled();
+    });
+
+    it("does not pull the image when it already exists", async () => {
+      const container = createFakeContainer();
+      mocks.createContainer.mockResolvedValue(container);
+
+      await executionService.runCode(1, "print('hi')");
+
+      expect(mocks.getImage).toHaveBeenCalledWith("python:3.12-alpine");
+      expect(mocks.pull).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("ensureImage", () => {
+    it("reports the image as already present without pulling", async () => {
+      const result = await executionService.ensureImage("python:3.12-alpine");
+
+      expect(result).toEqual({ alreadyPresent: true, pulled: false });
+      expect(mocks.pull).not.toHaveBeenCalled();
+    });
+
+    it("pulls the image when missing and reports it", async () => {
+      mocks.getImage.mockReturnValue({
+        inspect: vi
+          .fn()
+          .mockRejectedValue(Object.assign(new Error("no such image"), { statusCode: 404 })),
+      });
+      mocks.pull.mockResolvedValue({});
+      mocks.followProgress.mockImplementation(
+        (_stream: unknown, onFinished: (error: Error | null) => void) => {
+          onFinished(null);
+        }
+      );
+
+      const result = await executionService.ensureImage("python:3.12-alpine");
+
+      expect(result).toEqual({ alreadyPresent: false, pulled: true });
+      expect(mocks.pull).toHaveBeenCalledWith("python:3.12-alpine");
+    });
+
+    it("rethrows non-404 inspect errors without pulling", async () => {
+      mocks.getImage.mockReturnValue({
+        inspect: vi
+          .fn()
+          .mockRejectedValue(
+            Object.assign(new Error("docker daemon unavailable"), { statusCode: 500 })
+          ),
+      });
+
+      await expect(executionService.ensureImage("python:3.12-alpine")).rejects.toThrow(
+        "docker daemon unavailable"
+      );
+      expect(mocks.pull).not.toHaveBeenCalled();
+    });
   });
 
   describe("concurrency limit", () => {

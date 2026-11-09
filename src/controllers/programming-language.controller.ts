@@ -25,6 +25,32 @@ export class ProgrammingLanguageController {
     }
   };
 
+  ensureImage = async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+
+      if (!id || typeof id !== "string") {
+        return res.status(400).json({ error: "Invalid or missing ID parameter" });
+      }
+
+      const numericId = parseInt(id, 10);
+      if (Number.isNaN(numericId)) {
+        return res.status(400).json({ error: "Invalid ID parameter" });
+      }
+
+      const result = await this.programmingLanguageService.ensureImage(numericId);
+      return res.status(200).json(result);
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error ensuring language image.";
+
+      if (message === "Language not found.") {
+        return res.status(404).json({ error: message });
+      }
+
+      return res.status(500).json({ error: message });
+    }
+  };
+
   getById = async (req: Request, res: Response) => {
     try {
       const { id } = req.params;

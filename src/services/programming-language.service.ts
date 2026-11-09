@@ -2,6 +2,7 @@ import prisma from "../config/prisma.js";
 import type { CreateLanguageRequest } from "../types/requests/create-language.request.js";
 import type { UpdateLanguageRequest } from "../types/requests/update-language.response.js";
 import type { LanguageResponse } from "../types/responses/language-response.model.js";
+import type { LanguageImageEnsureResponse } from "../types/responses/language-image-ensure.response.js";
 import type { IProgrammingLanguageService } from "./interfaces/programming-language.service.interface.js";
 import type { IExecutionService } from "./interfaces/execution.service.interface.js";
 
@@ -30,6 +31,20 @@ export class ProgrammingLanguageService implements IProgrammingLanguageService {
     } catch (error: unknown) {
       throw new Error("Error fetching programming languages.");
     }
+  }
+
+  async ensureImage(id: number): Promise<LanguageImageEnsureResponse> {
+    const language = await prisma.programmingLanguage.findUnique({
+      where: { id },
+    });
+
+    if (!language) throw new Error("Language not found.");
+
+    const { alreadyPresent, pulled } = await this.executionService.ensureImage(
+      language.dockerImage
+    );
+
+    return { dockerImage: language.dockerImage, alreadyPresent, pulled };
   }
 
   async findById(id: number): Promise<LanguageResponse | null> {
